@@ -55,29 +55,6 @@ center_timer = 0
 correct_timer = 0
 
 
-###############INITIALIZE SESSION#############################
-clf = pickle.load(open('userData/classifier.p', 'rb'))
-testData = np.zeros((1, 30), dtype='f')
-database = pickle.load(open('userData/database.p', 'rb'))
-userName = raw_input('Please enter your name: ')
-
-if userName in database:
-    welcomeMessage = "Welcome back, " + userName + "!"
-    database[userName]['logins'] += 1
-    print welcomeMessage
-    print database[userName]
-
-else:
-    userType = raw_input('Are you a kid or adult?')
-    welcomeMessage = "Welcome, " + userName + "!"
-    database[userName] = {'userType': userType, 'logins': 1, 'lesson': 1, 'digitsComplete': 0, 'sessionAccuracy': 0,
-                          '0attempted': 0, '1attempted': 0, '2attempted': 0, '3attempted': 0, '4attempted': 0,
-                          '5attempted': 0, '6attempted': 0, '7attempted': 0, '8attempted': 0, '9attempted': 0,
-                          '0correct': 0, '1correct': 0, '2correct': 0, '3correct': 0, '4correct': 0, '5correct': 0,
-                          '6correct': 0, '7correct': 0, '8correct': 0, '9correct': 0}
-    print welcomeMessage
-    print database[userName]
-
 ###############INITIALIZE THE GUI#############################
 matplotlib.interactive(True)
 fig1 = plt.figure(figsize=(10, 6))
@@ -178,10 +155,9 @@ def saveUserData():
     pickle.dump(database, open('userData/database.p', 'wb'))
 
 
-def checkLesson():
-    lesson = database[userName]['lesson']
-    header_view.text(.01, .76, "Level " + str(lesson), fontsize=30, fontweight='bold')
-    return lesson
+def getLevel():
+    level = database[userName]['lesson']
+    return level
 
 
 def checkHandPosition(hand):
@@ -249,10 +225,8 @@ def isReady(hand):
     elif center_timer == 12:
         handcolor = '#ffaf1a'
 
-    elif center_timer == 20:
+    elif center_timer >= 20:
         return True
-    else:
-        return False
 
 
 def lesson1():
@@ -338,8 +312,47 @@ class Lesson(object):
         return 0
 
 
-###############MAIN PROGRAM LOOP#############################
+
+
+
+
+
+###############INITIALIZE SESSION#############################
+clf = pickle.load(open('userData/classifier.p', 'rb'))
+testData = np.zeros((1, 30), dtype='f')
+database = pickle.load(open('userData/database.p', 'rb'))
+userName = raw_input('Please enter your name: ')
+
+if userName in database:
+    welcomeMessage = "Welcome back, " + userName + "!"
+    database[userName]['logins'] += 1
+    print welcomeMessage
+    print database[userName]
+
+else:
+    userType = raw_input('Are you a kid or adult?')
+    welcomeMessage = "Welcome, " + userName + "!"
+    database[userName] = {'userType': userType, 'logins': 1, 'lesson': 1, 'digitsComplete': 0, 'sessionAccuracy': 0,
+                          '0attempted': 0, '1attempted': 0, '2attempted': 0, '3attempted': 0, '4attempted': 0,
+                          '5attempted': 0, '6attempted': 0, '7attempted': 0, '8attempted': 0, '9attempted': 0,
+                          '0correct': 0, '1correct': 0, '2correct': 0, '3correct': 0, '4correct': 0, '5correct': 0,
+                          '6correct': 0, '7correct': 0, '8correct': 0, '9correct': 0}
+    print welcomeMessage
+    print database[userName]
+    config = {  
+        'digits': [0],
+        'presentation_mode': 'img',
+        'level': getLevel()
+    }
+    current_lesson = Lesson(config)
+
 welcomeView()
+
+header_view.text(.01, .76, "Level " + str(getLevel()), fontsize=30, fontweight='bold')
+
+
+###############MAIN PROGRAM LOOP#############################
+
 
 while (True):
     print 'one loop'
@@ -347,21 +360,11 @@ while (True):
     #array to hold hand data
     lines = []
 
-    level = checkLesson()
+    level = getLevel()
+    header_view.text(.01, .76, "Level " + str(level), fontsize=30, fontweight='bold')
 
-    try:
-        current_lesson
-    except NameError:
-        config = {
-            'digits': [0],
-            'presentation_mode': 'img',
-            'level': 1
-        }
-        current_lesson = Lesson(config)
-
-    else:
-        if current_lesson.level != level:
-            current_lesson = Lesson()
+    if current_lesson.level != level:
+        current_lesson = Lesson()
 
     if len(frame.hands) < 1:
         main_view.imshow(leap_prompt)
